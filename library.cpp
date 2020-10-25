@@ -35,7 +35,7 @@ class Matrix
 		Matrix *LUdecomposition();
 		Matrix *LDUdecomposition();
 		Matrix *SVD(); //Single-value decomposition
-		Matrix adjoint(); //Finds the adjoint of the given matrix
+		void adjoint(float[4][4]); //Finds the adjoint of the given matrix
 		int isInvertible(); //Returns 1 if the matrix is invertible else returns 0
 		Matrix scalarMul(); //Multiplies the matrix by a scalar value
 		int isIdempotent(); //Returns 1 if the matrix is idempotent else returns 0
@@ -45,7 +45,11 @@ class Matrix
 		int duplicate(); //returns the number of duplicate numbers in the matrix
 		Matrix additiveInv(); //finds the additive inverse of the matrix
 		float determinant(); //finds the determinant of the matrix
+		void getCofactor(float[4][4], int, int);//finds the cofactor matrix
+
 };
+
+
 
 Matrix::Matrix(int row,int column)
 {
@@ -204,7 +208,7 @@ float Matrix::determinant()
     int sign = 1;
     for (int k = 0; k < r; k++)
     {
-        //loop to find the cofactor matrix
+        //loop to find the minor matrix
         int i = 0, j = 0;
         for (int r1 = 0; r1 < r2; r1++)
         {
@@ -232,6 +236,37 @@ float Matrix::determinant()
       return det;
 }
 
+void Matrix::adjoint(float adj[4][4])
+{
+    Matrix matrr(r,c);
+    if (r == 1)
+    {
+        adj[0][0] = 1;
+        return;
+    }
+
+    // cofact is used to store cofactors of A[][]
+    int sign = 1;
+    float cofact[r][r];
+
+    for (int i=0; i<r; i++)
+    {
+        for (int j=0; j<r; j++)
+        {
+            // to get cofactor
+            matrr.getCofactor(cofact, i, j);
+
+            // sign of adj[j][i] is positive if sum of row
+            // and column indexes is even.
+
+            sign = ((i+j)%2==0)? 1: -1;
+
+            // Interchanging rows and columns to get the
+            // transpose of the cofactor matrix
+            adj[j][i] = (sign)*(matrr.determinant());
+        }
+    }
+}
 
 
 int Matrix::isIdempotent(){

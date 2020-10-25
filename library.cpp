@@ -268,6 +268,17 @@ void Matrix::adjoint(float adj[4][4])
     }
 }
 
+void Matrix::inverse()
+{
+    Matrix matr(r,c);
+    float det = matr.determinant();
+    float adj[r][r];
+    matr.adjoint(adj);
+    for (int i=0; i<r; i++)
+        for (int j=0; j<r; j++)
+            inverse[i][j] = adj[i][j]/float(det);
+}
+
 
 int Matrix::isIdempotent(){
 	Matrix mat(r,c);

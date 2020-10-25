@@ -271,6 +271,7 @@ void Matrix::adjoint(float adj[4][4])
 void Matrix::inverse()//finds the inverse of the matrix
 {
     Matrix matr(r,c);
+    //gets the determinant
     float det = matr.determinant();
     float adj[r][r];
     matr.adjoint(adj);

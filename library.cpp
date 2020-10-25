@@ -25,7 +25,6 @@ class Matrix
 		int trace(); //Find the trace of a given matrix
 		int *dimensions(); //Find the dimensions of a matrix
 		int *gaussElimination();
-		double determinant(int , double [10][10]);
 		Matrix columnSpace();
 		Matrix transpose();
 		Matrix nullSpace();
@@ -36,7 +35,6 @@ class Matrix
 		Matrix *LUdecomposition();
 		Matrix *LDUdecomposition();
 		Matrix *SVD(); //Single-value decomposition
-		int determinant(); //Finds the determinant of the given matrix
 		Matrix adjoint(); //Finds the adjoint of the given matrix
 		int isInvertible(); //Returns 1 if the matrix is invertible else returns 0
 		Matrix scalarMul(); //Multiplies the matrix by a scalar value
@@ -46,6 +44,7 @@ class Matrix
 		Matrix symmskew(); //expresses the matrix as a sum of a symmetric and skew symmetric matrix
 		int duplicate(); //returns the number of duplicate numbers in the matrix
 		Matrix additiveInv(); //finds the additive inverse of the matrix
+		float determinant(); //finds the determinant of the matrix
 };
 
 Matrix::Matrix(int row,int column)
@@ -192,39 +191,48 @@ Matrix Matrix::transpose()
 	return out;
 }
 
-double Matrix::determinant(int n,double mat[10][10])
+float Matrix::determinant()
 {
-    int k, subi, i, j, subj;
-    double d=0;
-    double submat[10][10];
-    if (n == 2)
+    Matrix mat(r,c);
+    float det = 0;
+    //here we are initializing a variable to keep reducing the size of the matrix every time
+    //the loop executes to find determinants of larger matrices
+    int r2=r;
+    if (r == 1)
+        return m[0][0];
+    float temp[r][r];
+    int sign = 1;
+    for (int k = 0; k < r; k++)
     {
-        return( (mat[0][0] * mat[1][1]) - (mat[1][0] * mat[0][1]));
-    }
-    else
-    {
-        for(k = 0; k < n; k++)
+        //loop to find the cofactor matrix
+        int i = 0, j = 0;
+        for (int r1 = 0; r1 < r2; r1++)
         {
-            subi = 0;
-            for(i = 1; i < n; i++)
+            for (int c1 = 0; c1 < r2; c1++)
             {
-                subj = 0;
-                for(j = 0; j < n; j++)
+
+                if (r1 != 0 && c1 != k)
                 {
-                    if (j == k)
+                    temp[i][j++] = m[r1][c1];
+                    if (j == r - 1)
                     {
-                        continue;
+                        j = 0;
+                        //proceeding to further rows
+                        i++;
                     }
-                    submat[subi][subj] = mat[i][j];
-                    subj++;
                 }
-                subi++;
             }
-        d = d + (pow(-1 ,c) * mat[0][c] * determinant(r - 1 ,submat));
         }
+        //reducing the matrix size for higher determinants
+        r2--;
+        //calculating determinant
+        det += sign * m[0][k] * determinant();
+        sign = -sign;
     }
-    return d;
+      return det;
 }
+
+
 
 int Matrix::isIdempotent(){
 	Matrix mat(r,c);
@@ -276,7 +284,7 @@ int Matrix::isInvolutory(){
 				    break;
 			    }
 		    }
-		    elseif(result.m[i][j]==0)
+		    else if(result.m[i][j]==0)
 		            continue;
 	            else{
 			    f = 1;
@@ -304,25 +312,24 @@ Matrix Matrix::additiveInv() {
     return out;
 }
 
-#<<<<<<< main
-#int Matrix::isInvertible()
-#{
-#    Matrix m2(r,c);
-#    float m3[10][10];
-#    m3[10][10]= m2.m[10][10];
-#    float d1=determinant(r,m3);
-#    if(isSquare() == 1)
-#    {
-#        if(d1 != 0)
-#            return 1;
-#    }
-#    else
-#        return 0;
-#}
+
+int Matrix::isInvertible()
+{
+    Matrix m2(r,c);
+    float m3[10][10];
+    m3[10][10]= m2.m[10][10];
+    float d1=determinant();
+    if(isSquare() == 1)
+    {
+        if(d1 != 0)
+            return 1;
+    }
+    else
+        return 0;
+}
 
 
-#=======
-#>>>>>>> main
+
 int main()
 {
 	Matrix m(4,4);
@@ -350,6 +357,7 @@ int main()
 
 	Matrix out1=m.columnSpace();
 	out1.printMatrix();
+
 
 	return 0;
 }

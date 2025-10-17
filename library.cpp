@@ -524,34 +524,361 @@ int Matrix::isInvertible()
 */
 
 
+void displayMenu() {
+    cout << "\n========== Linear Algebra Library ==========\n";
+    cout << "1.  Create and Display Matrix\n";
+    cout << "2.  Matrix Addition\n";
+    cout << "3.  Matrix Subtraction\n";
+    cout << "4.  Matrix Multiplication\n";
+    cout << "5.  Scalar Multiplication\n";
+    cout << "6.  Matrix Transpose\n";
+    cout << "7.  Calculate Determinant\n";
+    cout << "8.  Check if Identity Matrix\n";
+    cout << "9.  Check if Square Matrix\n";
+    cout << "10. Calculate Trace\n";
+    cout << "11. Gauss Elimination\n";
+    cout << "12. Column Space\n";
+    cout << "13. LU Decomposition\n";
+    cout << "14. Check if Idempotent\n";
+    cout << "15. Check if Involutory\n";
+    cout << "16. Additive Inverse\n";
+    cout << "17. Symmetric/Skew-Symmetric Decomposition\n";
+    cout << "0.  Exit\n";
+    cout << "============================================\n";
+    cout << "Enter your choice: ";
+}
+
+Matrix createMatrix() {
+    int rows, cols;
+    cout << "Enter number of rows: ";
+    cin >> rows;
+    cout << "Enter number of columns: ";
+    cin >> cols;
+    
+    if (rows <= 0 || cols <= 0 || rows > 100 || cols > 100) {
+        cout << "Invalid matrix dimensions! Please enter values between 1 and 100.\n";
+        cout << "Enter number of rows: ";
+        cin >> rows;
+        cout << "Enter number of columns: ";
+        cin >> cols;
+        // Clamp values to valid range
+        if (rows <= 0) rows = 1;
+        if (cols <= 0) cols = 1;
+        if (rows > 100) rows = 100;
+        if (cols > 100) cols = 100;
+    }
+    
+    cout << "Enter matrix elements:\n";
+    Matrix m(rows, cols, true);
+    return m;
+}
+
+Matrix createMatrixSilent(int rows, int cols) {
+    if (rows <= 0 || cols <= 0 || rows > 100 || cols > 100) {
+        cout << "Invalid matrix dimensions! Using default 3x3 matrix instead.\n";
+        rows = cols = 3;
+    }
+    
+    cout << "Enter matrix elements:\n";
+    Matrix m(rows, cols, true);
+    return m;
+}
+
 // driver code
 int main()
 {
-	Matrix m(4,4);
-	cout<<"\n";
-	m.printMatrix();
-	cout<<"\n";
-
-    Matrix resu = m.addition();
-    resu.printMatrix();
-    cout<<"\n";
-
-    resu = m.subtraction();
-    resu.printMatrix();
-    cout<<"\n";
-
-
-	Matrix out=m.transpose();
-	out.printMatrix();
-	cout<<"\n";
-
-    cout<<"gauss";
-	int *y=m.gaussElimination();
-	m.printMatrix();
-	cout<<"\n";
-
-	Matrix out1=m.columnSpace();
-	out1.printMatrix();
-
-	return 0;
+    int choice;
+    Matrix* matrix1 = nullptr;
+    Matrix* matrix2 = nullptr;
+    
+    cout << "Welcome to Linear Algebra Library!\n";
+    
+    while (true) {
+        displayMenu();
+        cin >> choice;
+        
+        switch (choice) {
+            case 0:
+                cout << "Thank you for using Linear Algebra Library!\n";
+                if (matrix1) delete matrix1;
+                if (matrix2) delete matrix2;
+                return 0;
+                
+            case 1: {
+                cout << "\n--- Create and Display Matrix ---\n";
+                if (matrix1) delete matrix1;
+                matrix1 = new Matrix(createMatrix());
+                cout << "\nMatrix created successfully:\n";
+                matrix1->printMatrix();
+                break;
+            }
+            
+            case 2: {
+                cout << "\n--- Matrix Addition ---\n";
+                cout << "Enter first matrix:\n";
+                Matrix m1 = createMatrix();
+                cout << "Enter second matrix (same dimensions):\n";
+                Matrix m2 = createMatrixSilent(m1.r, m1.c);
+                
+                if (m1.r == m2.r && m1.c == m2.c) {
+                    Matrix result = m1 + m2;
+                    cout << "\nResult of addition:\n";
+                    result.printMatrix();
+                } else {
+                    cout << "Error: Matrix dimensions don't match for addition!\n";
+                }
+                break;
+            }
+            
+            case 3: {
+                cout << "\n--- Matrix Subtraction ---\n";
+                cout << "Enter first matrix:\n";
+                Matrix m1 = createMatrix();
+                cout << "Enter second matrix (same dimensions):\n";
+                Matrix m2 = createMatrixSilent(m1.r, m1.c);
+                
+                if (m1.r == m2.r && m1.c == m2.c) {
+                    Matrix result = m1 - m2;
+                    cout << "\nResult of subtraction:\n";
+                    result.printMatrix();
+                } else {
+                    cout << "Error: Matrix dimensions don't match for subtraction!\n";
+                }
+                break;
+            }
+            
+            case 4: {
+                cout << "\n--- Matrix Multiplication ---\n";
+                cout << "Enter first matrix:\n";
+                Matrix m1 = createMatrix();
+                cout << "Enter second matrix:\n";
+                Matrix m2 = createMatrix();
+                
+                if (m1.c == m2.r) {
+                    Matrix result = m1.multiplication();
+                    cout << "\nResult of multiplication:\n";
+                    result.printMatrix();
+                } else {
+                    cout << "Error: Cannot multiply matrices! First matrix columns must equal second matrix rows.\n";
+                }
+                break;
+            }
+            
+            case 5: {
+                cout << "\n--- Scalar Multiplication ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                int scalar;
+                cout << "Enter scalar value: ";
+                cin >> scalar;
+                
+                Matrix result = (*matrix1) * scalar;
+                cout << "\nResult of scalar multiplication:\n";
+                result.printMatrix();
+                break;
+            }
+            
+            case 6: {
+                cout << "\n--- Matrix Transpose ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                Matrix result = matrix1->transpose();
+                cout << "\nTranspose of the matrix:\n";
+                result.printMatrix();
+                break;
+            }
+            
+            case 7: {
+                cout << "\n--- Calculate Determinant ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    double det = matrix1->determinant(matrix1->r, matrix1->m);
+                    cout << "Determinant: " << det << endl;
+                } else {
+                    cout << "Error: Determinant can only be calculated for square matrices!\n";
+                }
+                break;
+            }
+            
+            case 8: {
+                cout << "\n--- Check if Identity Matrix ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isIdentity()) {
+                    cout << "The matrix is an identity matrix.\n";
+                } else {
+                    cout << "The matrix is not an identity matrix.\n";
+                }
+                break;
+            }
+            
+            case 9: {
+                cout << "\n--- Check if Square Matrix ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    cout << "The matrix is a square matrix.\n";
+                } else {
+                    cout << "The matrix is not a square matrix.\n";
+                }
+                break;
+            }
+            
+            case 10: {
+                cout << "\n--- Calculate Trace ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    int tr = matrix1->trace();
+                    cout << "Trace of the matrix: " << tr << endl;
+                } else {
+                    cout << "Error: Trace can only be calculated for square matrices!\n";
+                }
+                break;
+            }
+            
+            case 11: {
+                cout << "\n--- Gauss Elimination ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                cout << "Performing Gauss Elimination:\n";
+                matrix1->gaussElimination();
+                cout << "\nMatrix after Gauss Elimination:\n";
+                matrix1->printMatrix();
+                break;
+            }
+            
+            case 12: {
+                cout << "\n--- Column Space ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                Matrix result = matrix1->columnSpace();
+                cout << "Column space of the matrix:\n";
+                result.printMatrix();
+                break;
+            }
+            
+            case 13: {
+                cout << "\n--- LU Decomposition ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    cout << "Performing LU Decomposition:\n";
+                    matrix1->LUdecomposition();
+                } else {
+                    cout << "Error: LU decomposition requires a square matrix!\n";
+                }
+                break;
+            }
+            
+            case 14: {
+                cout << "\n--- Check if Idempotent ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    if (matrix1->isIdempotent()) {
+                        cout << "The matrix is idempotent (A^2 = A).\n";
+                    } else {
+                        cout << "The matrix is not idempotent.\n";
+                    }
+                } else {
+                    cout << "Error: Idempotent check requires a square matrix!\n";
+                }
+                break;
+            }
+            
+            case 15: {
+                cout << "\n--- Check if Involutory ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    if (matrix1->isInvolutory()) {
+                        cout << "The matrix is involutory (A^2 = I).\n";
+                    } else {
+                        cout << "The matrix is not involutory.\n";
+                    }
+                } else {
+                    cout << "Error: Involutory check requires a square matrix!\n";
+                }
+                break;
+            }
+            
+            case 16: {
+                cout << "\n--- Additive Inverse ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                Matrix result = matrix1->additiveInv();
+                cout << "Additive inverse of the matrix:\n";
+                result.printMatrix();
+                break;
+            }
+            
+            case 17: {
+                cout << "\n--- Symmetric/Skew-Symmetric Decomposition ---\n";
+                if (!matrix1) {
+                    cout << "Please create a matrix first (option 1).\n";
+                    break;
+                }
+                
+                if (matrix1->isSquare()) {
+                    Matrix* result = matrix1->symmskew();
+                    if (result != NULL) {
+                        cout << "Symmetric part:\n";
+                        result[0].printMatrix();
+                        cout << "\nSkew-symmetric part:\n";
+                        result[1].printMatrix();
+                    }
+                } else {
+                    cout << "Error: Symmetric/Skew-symmetric decomposition requires a square matrix!\n";
+                }
+                break;
+            }
+            
+            default:
+                cout << "Invalid choice! Please enter a number between 0 and 17.\n";
+                break;
+        }
+        
+        cout << "\nPress Enter to continue...";
+        cin.ignore();
+        cin.get();
+    }
+    
+    return 0;
 }

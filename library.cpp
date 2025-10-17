@@ -138,6 +138,183 @@ class Matrix
 		};
 };
 
+int* Matrix::eigenValues()
+{
+    static int eigvals[100]; 
+    if (r != c) {
+        cout << "Eigenvalues only exist for square matricies.\n";
+        return NULL;
+    }
+
+    int n = r;
+    Matrix A(r, c, false);
+
+    //copy A
+    for (int i = 0; i < r; i++)
+        for (int j = 0; j < c; j++)
+            A.m[i][j] = m[i][j];
+
+    int maxIter = 100;
+    float tolerance = 1e-10;
+
+    for (int iter = 0; iter < maxIter; iter++)
+    {
+        
+        int p = 0, q = 1;
+        float maxVal = fabs(A.m[p][q]);
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = i + 1; j < n; j++)
+            {
+                if (fabs(A.m[i][j]) > maxVal)
+                {
+                    maxVal = fabs(A.m[i][j]);
+                    p = i;
+                    q = j;
+                }
+            }
+        }
+
+        
+        if (maxVal < tolerance)
+            break;
+
+        float theta;
+        if (fabs(A.m[p][p] - A.m[q][q]) < tolerance)
+            theta = M_PI / 4.0;
+        else
+            theta = 0.5 * atan(2.0 * A.m[p][q] / (A.m[p][p] - A.m[q][q]));
+
+        float c = cos(theta);
+        float s = sin(theta);
+
+        
+        float temp[100][100];
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                temp[i][j] = A.m[i][j];
+
+        // rotation
+        for (int i = 0; i < n; i++)
+        {
+            if (i != p && i != q)
+            {
+                A.m[i][p] = c * temp[i][p] + s * temp[i][q];
+                A.m[p][i] = A.m[i][p];
+                A.m[i][q] = -s * temp[i][p] + c * temp[i][q];
+                A.m[q][i] = A.m[i][q];
+            }
+        }
+
+        A.m[p][p] = c * c * temp[p][p] + 2.0 * c * s * temp[p][q] + s * s * temp[q][q];
+        A.m[q][q] = s * s * temp[p][p] - 2.0 * c * s * temp[p][q] + c * c * temp[q][q];
+        A.m[p][q] = 0;
+        A.m[q][p] = 0;
+    }
+
+    cout << "Eigenvalues:\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << "λ" << i + 1 << " = " << A.m[i][i] << endl;
+    }
+
+    return eigvals;
+}
+
+Matrix Matrix::eigenVectors()
+{
+
+	if (r != c) {
+        cout << "Eigen values can only be found for square matrices.\n";
+        return Matrix(0, 0);
+    }
+
+    /*cout << "Enter matrix elements:\n";
+    for (int i = 0; i < r; i++)
+        for (int j = 0; j < c; j++)
+            cin >> m[i][j];*/
+
+    if (r != c) {
+        cout << "\n";
+        return Matrix(0, 0);
+    }
+
+    int n = r;
+    Matrix A(r, c, false);
+    Matrix V(r, c, false);
+
+    //V as indentity matrix
+    for (int i = 0; i < r; i++) {
+        for (int j = 0; j < c; j++) {
+            A.m[i][j] = m[i][j];
+            V.m[i][j] = (i == j) ? 1 : 0;
+        }
+    }
+
+    int maxIter = 100;
+    float tolerance = 1e-10;
+
+    for (int iter = 0; iter < maxIter; iter++) {
+        // largest diagonal
+        int p = 0, q = 1;
+        float maxVal = fabs(A.m[p][q]);
+        for (int i = 0; i < n; i++)
+            for (int j = i + 1; j < n; j++)
+                if (fabs(A.m[i][j]) > maxVal)
+                    maxVal = fabs(A.m[p = i][q = j]);
+
+		// convergence condition
+        if (maxVal < tolerance)
+            break; 
+
+        float theta;
+        if (fabs(A.m[p][p] - A.m[q][q]) < tolerance)
+            theta = M_PI / 4.0;
+        else
+            theta = 0.5 * atan(2.0 * A.m[p][q] / (A.m[p][p] - A.m[q][q]));
+
+        float c = cos(theta);
+        float s = sin(theta);
+
+        float temp[100][100];
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                temp[i][j] = A.m[i][j];
+
+        for (int i = 0; i < n; i++) {
+            if (i != p && i != q) {
+                A.m[i][p] = c * temp[i][p] + s * temp[i][q];
+                A.m[p][i] = A.m[i][p];
+                A.m[i][q] = -s * temp[i][p] + c * temp[i][q];
+                A.m[q][i] = A.m[i][q];
+            }
+        }
+
+        A.m[p][p] = c * c * temp[p][p] + 2.0 * c * s * temp[p][q] + s * s * temp[q][q];
+        A.m[q][q] = s * s * temp[p][p] - 2.0 * c * s * temp[p][q] + c * c * temp[q][q];
+        A.m[p][q] = 0;
+        A.m[q][p] = 0;
+
+        // updating V for eigen vectors
+        for (int i = 0; i < n; i++) {
+            float vip = V.m[i][p];
+            float viq = V.m[i][q];
+            V.m[i][p] = c * vip + s * viq;
+            V.m[i][q] = -s * vip + c * viq;
+        }
+    }
+
+    cout << "Eigenvalues:\n";
+    for (int i = 0; i < n; i++)
+        cout << "λ" << i + 1 << " = " << A.m[i][i] << endl;
+
+    cout << "\nEigenvectors :\n" << endl;
+    V.printMatrix();
+
+    return V;
+}
+
+
 Matrix::Matrix(int row, int column, bool fill)
 {
 	r=row;
@@ -703,6 +880,12 @@ int main()
 
 	cout<<"Performing SVD..."<<endl;
 	Matrix *svd_result = m.SVD();
+
+	cout<<"Finding EigenValues:"<<endl;
+	int* eval = m.eigenValues();
+
+	cout<<"Finding EigenVectors:"<<endl;
+	Matrix evec = m.eigenVectors();
 	
 	return 0;
 }

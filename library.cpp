@@ -1,5 +1,6 @@
 #include <iostream>
 #include<math.h>
+#include <vector>
 using namespace std;
 
 class Matrix
@@ -242,7 +243,7 @@ int Matrix::isSquare() {
         return 0;
 }
 
-int *Matrix::dimensions() {
+/*int *Matrix::dimensions() {
     Matrix m1(r,c);
     int arr[2];
     arr[0]=r;
@@ -250,8 +251,15 @@ int *Matrix::dimensions() {
     return arr;
 
 }
+*/
+int* Matrix::dimensions() {
+    int* arr = new int[2]; // allocate on heap
+    arr[0] = r;
+    arr[1] = c;
+    return arr; // safe now
+}
 
-int *Matrix::gaussElimination()
+/*int *Matrix::gaussElimination()
 {
 	int x_arr[100];
 	int *ptr=x_arr;
@@ -268,6 +276,31 @@ int *Matrix::gaussElimination()
 		}
 	return x_arr;
 }
+*/
+int* Matrix::gaussElimination() {
+    int* x_arr = new int[100];
+    int* ptr = x_arr;
+
+    for(int i = 0; i < c; i++)
+        for(int j = i+1; j < r; j++) 
+		{
+            float x =this-> m[j][i] /this-> m[i][i];
+            *ptr = x;
+            ptr++;
+            for(int k = 0; k < c; k++)
+                this->m[j][k] -= x *this-> m[i][k];
+            printMatrix();
+            cout << "\n";
+        }
+
+    return x_arr;
+}
+
+// Caller:
+
+// use y
+
+
 
 Matrix Matrix::columnSpace()
 {
@@ -364,6 +397,68 @@ Matrix *Matrix::LUdecomposition(){
 	lower.printMatrix();
 	return 0;
 }
+Matrix* Matrix::LDUdecomposition() {
+    if (r != c) {
+        cout << "Matrix must be square for LDU decomposition.\n";
+        return NULL;
+    }
+
+    Matrix A(r, c);
+    Matrix L(r, c, false);
+    Matrix D(r, c, false);
+    Matrix U(r, c, false);
+
+    // Initialize L and U as identity
+    for (int i = 0; i < r; i++) {
+        L.m[i][i] = 1;
+        U.m[i][i] = 1;
+    }
+
+    // Perform decomposition
+    for (int i = 0; i < r; i++) {
+        for (int j = i; j < r; j++) {
+            float sum = 0;
+            for (int k = 0; k < i; k++)
+                sum += L.m[i][k] * D.m[k][k] * U.m[k][j];
+            D.m[i][i] = A.m[i][i] - sum;
+        }
+
+        for (int j = i + 1; j < r; j++) {
+            float sumL = 0, sumU = 0;
+            for (int k = 0; k < i; k++) {
+                sumL += L.m[j][k] * D.m[k][k] * U.m[k][i];
+                sumU += L.m[i][k] * D.m[k][k] * U.m[k][j];
+            }
+
+            L.m[j][i] = (A.m[j][i] - sumL) / D.m[i][i];
+            U.m[i][j] = (A.m[i][j] - sumU) / D.m[i][i];
+        }
+    }
+
+    cout << "\nL Matrix:\n";
+    L.printMatrix();
+    cout << "\nD Matrix:\n";
+    D.printMatrix();
+    cout << "\nU Matrix:\n";
+    U.printMatrix();
+
+    // Allocate memory dynamically and return pointer array
+    //Matrix* result = new Matrix[3];
+    //result[0] = L;
+    //result[1] = D;
+    //result[2] = U;
+    Matrix* result = new Matrix[3]{
+    Matrix(r, c, false),
+    Matrix(r, c, false),
+    Matrix(r, c, false)
+};
+result[0] = L;
+result[1] = D;
+result[2] = U;
+
+    return result;
+}
+
 
 
 int Matrix::isIdempotent(){
@@ -524,8 +619,8 @@ int Matrix::isInvertible()
 */
 
 
-// driver code
-int main()
+//driver code
+/*int main()
 {
 	Matrix m(4,4);
 	cout<<"\n";
@@ -535,6 +630,10 @@ int main()
     Matrix resu = m.addition();
     resu.printMatrix();
     cout<<"\n";
+
+	int* dims = m.dimensions();          // call the modified function
+    cout << "Rows: " << dims[0] << ", Columns: " << dims[1] << endl;
+    delete[] dims;   
 
     resu = m.subtraction();
     resu.printMatrix();
@@ -546,12 +645,83 @@ int main()
 	cout<<"\n";
 
     cout<<"gauss";
-	int *y=m.gaussElimination();
+	/*int *y=m.gaussElimination();
 	m.printMatrix();
 	cout<<"\n";
 
+    int* y = m.gaussElimination();       // call the modified function
+    // You can print the values if needed
+    for(int i=0; i<4; i++) {             // example: only first 4 entries
+        cout << y[i] << " ";
+    }
+    cout << "\n";
+    delete[] y;         
+    
 	Matrix out1=m.columnSpace();
 	out1.printMatrix();
+*/
+	// Perform Gaussian Elimination and store multipliers
+/*int* y = m.gaussElimination();  // call the modified function
+
+// Print the first few multipliers (adjust the number as needed)
+for(int i = 0; i < (m.r * (m.c - 1) / 2); i++) {  // total number of multipliers in elimination
+    cout << y[i] << " ";
+}
+cout << "\n";
+
+// Free heap memory
+delete[] y;
 
 	return 0;
+}
+*/
+// driver code
+int main()
+{
+    // 1. Create the matrix object
+    Matrix m(4, 4);
+
+    // 2. Print the original matrix
+    cout << "\nOriginal Matrix:\n";
+    m.printMatrix();
+    cout << "\n";
+
+    // 3. Matrix addition example
+    Matrix resu = m.addition();
+    cout << "\nAfter Addition:\n";
+    resu.printMatrix();
+    cout << "\n";
+
+    // 4. Get matrix dimensions
+    int* dims = m.dimensions();          
+    cout << "Rows: " << dims[0] << ", Columns: " << dims[1] << endl;
+    delete[] dims;   // free memory
+
+    // 5. Matrix subtraction example
+    resu = m.subtraction();
+    cout << "\nAfter Subtraction:\n";
+    resu.printMatrix();
+    cout << "\n";
+
+    // 6. Transpose example
+    Matrix out = m.transpose();
+    cout << "\nTranspose:\n";
+    out.printMatrix();
+    cout << "\n";
+
+    // 7. Gaussian Elimination
+	//int* y = m.gaussElimination();
+    cout << "\nGaussian Elimination Multipliers:\n";
+    int* y = m.gaussElimination();  // call the modified function
+
+    // Print the multipliers
+    int totalMultipliers = m.r * (m.c - 1) / 2; // safe estimate
+    for(int i = 0; i < totalMultipliers; i++) {  
+        cout << y[i] << " ";
+    }
+    cout << "\n";
+
+    delete[] y; // free heap memory
+
+    return 0;
 }

@@ -1,6 +1,9 @@
 #include <iostream>
 #include<math.h>
+#include <cmath>
 using namespace std;
+
+#define EPS 1e-6f
 
 class Matrix
 {
@@ -137,6 +140,216 @@ class Matrix
 			return result;
 		};
 };
+
+Matrix Matrix::nullSpace()
+{
+    // Null space of an r x c matrix A: solve A x = 0
+    // Returned Matrix has 'c' rows and 'k' columns where k = dimension of nullspace.
+    if (r <= 0 || c <= 0) {
+        std::cout << "Invalid matrix dimensions for nullSpace().\n";
+        return Matrix(1,1,false);
+    }
+
+    // Work on a copy (float tmp[r][c])
+    float tmp[100][100];
+    for (int i = 0; i < r; ++i)
+        for (int j = 0; j < c; ++j)
+            tmp[i][j] = m[i][j];
+
+    // pivot_row_for_col[j] = row index where column j has its pivot (or -1 if free)
+    int pivot_row_for_col[100];
+    for (int j = 0; j < c; ++j) pivot_row_for_col[j] = -1;
+
+    int row = 0;
+    for (int col = 0; col < c && row < r; ++col) {
+        // find pivot in [row..r-1] for this column
+        int sel = -1;
+        float maxabs = 0.0f;
+        for (int i = row; i < r; ++i) {
+            float aval = fabsf(tmp[i][col]);
+            if (aval > maxabs) { maxabs = aval; sel = i; }
+        }
+
+        if (sel == -1 || maxabs < EPS) {
+            // no pivot in this column -> free column
+            continue;
+        }
+
+        // swap sel row with current row if needed
+        if (sel != row) {
+            for (int j = col; j < c; ++j) { // swapping only needed columns from current col is enough
+                float t = tmp[sel][j];
+                tmp[sel][j] = tmp[row][j];
+                tmp[row][j] = t;
+            }
+        }
+
+        // normalize pivot row (make pivot = 1)
+        float pivot_val = tmp[row][col];
+        if (fabsf(pivot_val - 1.0f) > EPS) {
+            for (int j = col; j < c; ++j)
+                tmp[row][j] /= pivot_val;
+        }
+
+        // eliminate this column in all other rows (Gauss-Jordan)
+        for (int i = 0; i < r; ++i) {
+            if (i == row) continue;
+            float factor = tmp[i][col];
+            if (fabsf(factor) > EPS) {
+                for (int j = col; j < c; ++j)
+                    tmp[i][j] -= factor * tmp[row][j];
+            }
+        }
+
+        pivot_row_for_col[col] = row;
+        row++;
+    }
+
+    // Determine free columns
+    bool is_pivot_col[100];
+    for (int j = 0; j < c; ++j) is_pivot_col[j] = (pivot_row_for_col[j] != -1);
+
+    int free_count = 0;
+    int free_cols[100];
+    for (int j = 0; j < c; ++j) {
+        if (!is_pivot_col[j]) {
+            free_cols[free_count++] = j;
+        }
+    }
+
+    // If nullspace is {0} (no free variables), return a single zero vector column
+    if (free_count == 0) {
+        Matrix res(c, 1, false);
+        for (int i = 0; i < c; ++i) res.m[i][0] = 0.0f;
+        return res;
+    }
+
+    // Build basis vectors: for each free variable set it = 1 and others free = 0,
+    // solve for pivot variables from RREF rows: pivot_var = - sum( row_coeff * free_var )
+    Matrix basis(c, free_count, false); // each column is a basis vector (length c)
+
+    for (int k = 0; k < free_count; ++k) {
+        int free_col = free_cols[k];
+
+        // initialize solution vector x (size c) to zeros
+        float x[100];
+        for (int j = 0; j < c; ++j) x[j] = 0.0f;
+
+        // set the free variable to 1
+        x[free_col] = 1.0f;
+
+        // For each pivot column, compute its variable value using the pivot row
+        // In RREF, pivot row pivot_col has 1 at pivot and coefficients for free columns
+        for (int col = 0; col < c; ++col) {
+            int prow = pivot_row_for_col[col];
+            if (prow == -1) continue; // skip free columns
+            // pivot variable x[col] = - sum_{j free} (tmp[prow][j] * x[j])
+            float sum = 0.0f;
+            for (int jj = 0; jj < free_count; ++jj) {
+                int fj = free_cols[jj];
+                // tmp[prow][fj] should be the coefficient of free var in pivot row
+                if (fabsf(tmp[prow][fj]) > EPS) sum += tmp[prow][fj] * x[fj];
+            }
+            x[col] = -sum;
+        }
+
+        // store x as column k of basis
+        for (int i = 0; i < c; ++i) basis.m[i][k] = x[i];
+    }
+
+    return basis;
+}
+
+int* Matrix::eigenValues() {
+    static int result[3];
+    if (r == 2 && c == 2) {
+        float a = m[0][0], b = m[0][1];
+        float c = m[1][0], d = m[1][1];
+
+        float trace = a + d;
+        float det = a*d - b*c;
+        float disc = trace*trace - 4*det;
+
+        if (disc >= 0) {
+            result[0] = (trace + sqrt(disc)) / 2;
+            result[1] = (trace - sqrt(disc)) / 2;
+        } else {
+            std::cout << "Complex eigenvalues (not handled).\n";
+            result[0] = result[1] = 0;
+        }
+        return result;
+    }
+
+    if (r == 3 && c == 3) {
+        float a = m[0][0], b = m[0][1], c = m[0][2];
+        float d = m[1][0], e = m[1][1], f = m[1][2];
+        float g = m[2][0], h = m[2][1], i = m[2][2];
+
+        float p1 = -(a + e + i);
+        float p2 = a*e + e*i + i*a - (b*d + c*g + f*h);
+        float p3 = -(a*e*i + b*f*g + c*d*h - c*e*g - b*d*i - a*f*h);
+
+        // Normalize to x^3 + A*x^2 + B*x + C = 0
+        float A = p1, B = p2, C = p3;
+
+        // Use Cardano's method (only real roots)
+        float Q = (3*B - A*A) / 9;
+        float R = (9*A*B - 27*C - 2*A*A*A) / 54;
+        float D = Q*Q*Q + R*R;
+
+        if (D >= 0) {
+            float S = cbrt(R + sqrt(D));
+            float T = cbrt(R - sqrt(D));
+            result[0] = -A/3 + (S + T);
+            result[1] = -A/3 - (S + T)/2;
+            result[2] = result[1];
+        } else {
+            float theta = acos(R / sqrt(-Q*Q*Q));
+            result[0] = 2 * sqrt(-Q) * cos(theta/3) - A/3;
+            result[1] = 2 * sqrt(-Q) * cos((theta + 2*M_PI)/3) - A/3;
+            result[2] = 2 * sqrt(-Q) * cos((theta + 4*M_PI)/3) - A/3;
+        }
+        return result;
+    }
+
+    std::cout << "Matrix must be 2x2 or 3x3.\n";
+    return NULL;
+}
+
+Matrix Matrix::eigenVectors() {
+    if (r != c) {
+        std::cout << "Matrix must be square.\n";
+        return Matrix(1,1,false);
+    }
+
+    int* eigVals = eigenValues();
+    if (eigVals == NULL) return Matrix(1,1,false);
+
+    int n = r;
+    Matrix eigVecs(n, n, false); // each column = eigenvector
+
+    for (int k = 0; k < n; k++) {
+        float λ = eigVals[k];
+
+        // Build (A - λI)
+        Matrix shifted(n, n, false);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                shifted.m[i][j] = m[i][j] - (i == j ? λ : 0);
+            }
+        }
+
+        // Get eigenvector via null space
+        Matrix nullV = shifted.nullSpace();
+
+        // If nullSpace() returns multiple columns, take first
+        for (int i = 0; i < n; i++)
+            eigVecs.m[i][k] = nullV.m[i][0];
+    }
+
+    return eigVecs;
+}
+
 
 Matrix::Matrix(int row, int column, bool fill)
 {
